@@ -373,6 +373,7 @@ namespace SRTPluginProviderRE5
                         gameMemoryValues.PlayerInventory[i]._itemID = (Item)InventoryEntriesPlayer1[i].ItemID;
                         gameMemoryValues.PlayerInventory[i]._slotNo = InventoryEntriesPlayer1[i].SlotNo;
                         gameMemoryValues.PlayerInventory[i]._stackSize = InventoryEntriesPlayer1[i].Quantity;
+                        gameMemoryValues.PlayerInventory[i]._maxSize = InventoryEntriesPlayer1[i].MaxQuantity;
                         gameMemoryValues.PlayerInventory[i]._equippedState = (ItemState)InventoryEntriesPlayer1[i].State;
                     }
                     else
@@ -409,6 +410,7 @@ namespace SRTPluginProviderRE5
                         gameMemoryValues.Player2Inventory[i]._itemID = (Item)InventoryEntriesPlayer2[i].ItemID;
                         gameMemoryValues.Player2Inventory[i]._slotNo = InventoryEntriesPlayer2[i].SlotNo;
                         gameMemoryValues.Player2Inventory[i]._stackSize = InventoryEntriesPlayer2[i].Quantity;
+                        gameMemoryValues.Player2Inventory[i]._maxSize = InventoryEntriesPlayer2[i].MaxQuantity;
                         gameMemoryValues.Player2Inventory[i]._equippedState = (ItemState)InventoryEntriesPlayer2[i].State;
                     }
                     else
@@ -429,6 +431,7 @@ namespace SRTPluginProviderRE5
             gameMemoryValues.PlayerInventory[i]._itemID = 0;
             gameMemoryValues.PlayerInventory[i]._slotNo = -1;
             gameMemoryValues.PlayerInventory[i]._stackSize = -1;
+            gameMemoryValues.PlayerInventory[i]._maxSize = -1;
             gameMemoryValues.PlayerInventory[i]._equippedState = 0;
         }
         private void EmptySlotPlayer2(int i)
@@ -436,6 +439,7 @@ namespace SRTPluginProviderRE5
             gameMemoryValues.Player2Inventory[i]._itemID = 0;
             gameMemoryValues.Player2Inventory[i]._slotNo = -1;
             gameMemoryValues.Player2Inventory[i]._stackSize = -1;
+            gameMemoryValues.PlayerInventory[i]._maxSize = -1;
             gameMemoryValues.Player2Inventory[i]._equippedState = 0;
         }
 

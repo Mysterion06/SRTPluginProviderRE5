@@ -9,7 +9,7 @@ namespace SRTPluginProviderRE5
 
         public string Description => "A game memory provider plugin for Resident Evil 5 (2008).";
 
-        public string Author => "Mysterion_06_, VideoGameRoulette & Squirrelies";
+        public string Author => "Mysterion_06_, Squirrelies, VideoGameRoulette & TheDementedSalad";
 
         public Uri MoreInfoURL => new Uri("https://github.com/Mysterion06/SRTPluginProviderRE5");
 
