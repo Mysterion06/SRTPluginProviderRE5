@@ -17,22 +17,21 @@ namespace SRTPluginProviderRE5
         // Versioninfo
         public string VersionInfo => FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
 
+        // Gamestate
+        public byte Gamestate { get => _gameState; set => _gameState = value; }
+        internal byte _gameState;
+
         // GameInfo
         public string GameInfo { get => _gameInfo; set => _gameInfo = value; }
         internal string _gameInfo;
 
         // Chris HP
-        public short PlayerCurrentHealth { get => _playerCurrentHealth; set => _playerCurrentHealth = value; }
-        internal short _playerCurrentHealth;
+        public GamePlayer Player { get => _player; set => _player = value; }
+        internal GamePlayer _player;
 
-        public short PlayerMaxHealth { get => _playerMaxHealth; set => _playerMaxHealth = value; }
-        internal short _playerMaxHealth;
         // Sheva HP
-        public short PlayerCurrentHealth2 { get => _playerCurrentHealth2; set => _playerCurrentHealth2 = value; }
-        internal short _playerCurrentHealth2;
-
-        public short PlayerMaxHealth2 { get => _playerMaxHealth2; set => _playerMaxHealth2 = value; }
-        internal short _playerMaxHealth2;
+        public GamePlayer Player2 { get => _player2; set => _player2 = value; }
+        internal GamePlayer _player2;
 
         // Money
         public int Money { get => _money; set => _money = value; }
@@ -86,6 +85,12 @@ namespace SRTPluginProviderRE5
         public float IGT { get => _igt; set => _igt = value; }
         internal float _igt;
 
+        // SRank
+        public bool IsSRank => Chapters.IsSRank(Chapter, EnemiesHit > 0 ? ShotsFired / EnemiesHit * 100 : 0, ChrisKills, Deaths, IGT);
+
+        // Required Kills SRank
+        public int KillsRequired => Chapters.GetKillsNeeded(Chapter);
+
         // Shots Fired 2
         public int ShotsFired2 { get => _shotsfired2; set => _shotsfired2 = value; }
         internal int _shotsfired2;
@@ -101,6 +106,9 @@ namespace SRTPluginProviderRE5
         // IGT 2
         public float IGT2 { get => _igt2; set => _igt2 = value; }
         internal float _igt2;
+
+        // SRank2
+        public bool IsSRank2 => Chapters.IsSRank(Chapter, EnemiesHit2 > 0 ? ShotsFired2 / EnemiesHit2 * 100 : 0, ShevaKills, Deaths2, IGT2);
 
         public InventoryEntry[] PlayerInventory { get => _playerInventory; set => _playerInventory = value; }
         internal InventoryEntry[] _playerInventory;

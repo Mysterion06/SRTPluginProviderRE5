@@ -32,6 +32,7 @@ namespace SRTPluginProviderRE5
         private int pointerAddressEndOfChapter;
         private int pointerAddressIGT;
         private int pointerAddressInventory;
+        private int pointerAddressGamestate;
 
         // Pointer Classes
         private IntPtr BaseAddress { get; set; }
@@ -49,6 +50,7 @@ namespace SRTPluginProviderRE5
         private MultilevelPointer PointerEnemiesHit { get; set; }
         private MultilevelPointer PointerDeaths { get; set; }
         private MultilevelPointer PointerIGT { get; set; }
+        private MultilevelPointer PointerGamestate { get; set; }
         private MultilevelPointer PointerStoreInventoryEntryList { get; set; }
         private MultilevelPointer PointerInventoryEntryListPlayer1 { get; set; }
         private MultilevelPointer PointerInventoryEntryListPlayer2 { get; set; }
@@ -96,6 +98,7 @@ namespace SRTPluginProviderRE5
                 PointerEnemiesHit = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressEndOfChapter));
                 PointerDeaths = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressEndOfChapter));
                 PointerIGT = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressIGT));
+                PointerGamestate = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressGamestate), 0x84, 0x4BC);
 
                 PointerEnemyHP = new MultilevelPointer[32];
                 for (int i = 0; i < PointerEnemyHP.Length; ++i)
@@ -133,6 +136,7 @@ namespace SRTPluginProviderRE5
             pointerAddressEndOfChapter = 0xDA23D8;
             pointerAddressIGT = 0xDA23D8;
             pointerAddressInventory = 0xDA2A34;
+            pointerAddressGamestate = 0xDA2970;
         }
 
         /// <summary>
@@ -187,6 +191,7 @@ namespace SRTPluginProviderRE5
             PointerEnemiesHit.UpdatePointers();
             PointerDeaths.UpdatePointers();
             PointerIGT.UpdatePointers();
+            PointerGamestate.UpdatePointers();
 
             GenerateEnemyEntries(); // This has to be here for the next part.
             for (int i = 0; i < PointerEnemyHP.Length; ++i)
@@ -205,23 +210,14 @@ namespace SRTPluginProviderRE5
             bool success;
 
             // Chris HP
-            if (SafeReadByteArray(PointerPlayerHP.Address, sizeof(GamePlayerHP), out byte[] gamePlayerHpBytes))
-            {
-                var playerHp = GamePlayerHP.AsStruct(gamePlayerHpBytes);
-                gameMemoryValues._playerMaxHealth = playerHp.Max;
-                gameMemoryValues._playerCurrentHealth = playerHp.Current;
-            }
-            // Sheva HP
-            if (SafeReadByteArray(PointerPlayerHP2.Address, sizeof(GamePlayerHP), out byte[] gamePlayerHpBytes2))
-            {
-                var playerHp2 = GamePlayerHP.AsStruct(gamePlayerHpBytes2);
-                gameMemoryValues._playerMaxHealth2 = playerHp2.Max;
-                gameMemoryValues._playerCurrentHealth2 = playerHp2.Current;
-            }
+            gameMemoryValues._player = PointerPlayerHP.Deref<GamePlayer>(0x1364);
+            gameMemoryValues._player2 = PointerPlayerHP2.Deref<GamePlayer>(0x1364);
 
             fixed (int* p = &gameMemoryValues._money)
                 success = PointerMoney.TryDerefInt(0x1C0, p);
 
+            // Gamestate
+            gameMemoryValues._gameState = PointerGamestate.DerefByte(0x3A4);
 
             // Money
             fixed (int* p = &gameMemoryValues._money)
@@ -439,7 +435,7 @@ namespace SRTPluginProviderRE5
             gameMemoryValues.Player2Inventory[i]._itemID = 0;
             gameMemoryValues.Player2Inventory[i]._slotNo = -1;
             gameMemoryValues.Player2Inventory[i]._stackSize = -1;
-            gameMemoryValues.PlayerInventory[i]._maxSize = -1;
+            gameMemoryValues.Player2Inventory[i]._maxSize = -1;
             gameMemoryValues.Player2Inventory[i]._equippedState = 0;
         }
 
