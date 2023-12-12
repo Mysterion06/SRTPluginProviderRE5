@@ -17,9 +17,6 @@ namespace SRTPluginProviderRE5
         // Versioninfo
         public string VersionInfo => FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
 
-        // Gamestate
-        public byte Gamestate { get => _gameState; set => _gameState = value; }
-        internal byte _gameState;
 
         // GameInfo
         public string GameInfo { get => _gameInfo; set => _gameInfo = value; }
@@ -32,6 +29,9 @@ namespace SRTPluginProviderRE5
         // Sheva HP
         public GamePlayer Player2 { get => _player2; set => _player2 = value; }
         internal GamePlayer _player2;
+
+        public byte Gamestate { get => _gameState; set => _gameState = value; }
+        internal byte _gameState;
 
         // Money
         public int Money { get => _money; set => _money = value; }

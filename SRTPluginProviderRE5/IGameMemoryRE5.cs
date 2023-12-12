@@ -10,11 +10,11 @@ namespace SRTPluginProviderRE5
         string GameName { get; }
         string VersionInfo { get; }
 
-        // Gamestate
-        byte Gamestate { get; set; }
-
         // GameInfo
         string GameInfo { get; set; }
+
+        // GameState
+        byte Gamestate { get; set; }
 
         // Chris HP
         GamePlayer Player { get; set; }

@@ -11,8 +11,6 @@ namespace SRTPluginProviderRE5
 {
     internal class GameMemoryRE5Scanner : IDisposable
     {
-
-        private static readonly int StoreInventoryTableCount = 9;
         private static readonly int InventoryTableCount = 12;
 
         // Variables
@@ -59,20 +57,20 @@ namespace SRTPluginProviderRE5
 
         private MultilevelPointer[] PointerEnemyHP { get; set; }
         
-        internal GameMemoryRE5Scanner(Process process = null)
+        internal GameMemoryRE5Scanner(Process process, GameVersion gv)
         {
             gameMemoryValues = new GameMemoryRE5();
             if (process != null)
-                Initialize(process);
+                Initialize(process, gv);
         }
 
-        internal unsafe void Initialize(Process process)
+        internal unsafe void Initialize(Process process, GameVersion gv)
         {
             if (process == null)
                 return; // Do not continue if this is null.
 
-            SelectPointerAddresses();
-            gameMemoryValues._gameInfo = GameHashes.DetectVersion(process.MainModule.FileName);
+            SelectPointerAddresses(GameHashes.DetectVersion(process.MainModule.FileName));
+            //gameMemoryValues._gameInfo = GameHashes.DetectVersion(process.MainModule.FileName);
 
             //if (!SelectPointerAddresses(GameHashes.DetectVersion(process.MainModule.FileName)))
             //    return; // Unknown version.
@@ -84,8 +82,8 @@ namespace SRTPluginProviderRE5
                 BaseAddress = NativeWrappers.GetProcessBaseAddress(pid, PInvoke.ListModules.LIST_MODULES_64BIT); // Bypass .NET's managed solution for getting this and attempt to get this info ourselves via PInvoke since some users are getting 299 PARTIAL COPY when they seemingly shouldn't.
 
                 // Setup the pointers.
-                PointerPlayerHP = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressHP), 0x24);
-                PointerPlayerHP2 = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressHP), 0x28);
+                PointerPlayerHP = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressHP), 0xEC);
+                PointerPlayerHP2 = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressHP), 0xF0);
                 PointerMoney = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressMoney));
                 PointerKillsChris = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressKills));
                 PointerKillsSheva = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressKills));
@@ -102,7 +100,7 @@ namespace SRTPluginProviderRE5
 
                 PointerEnemyHP = new MultilevelPointer[32];
                 for (int i = 0; i < PointerEnemyHP.Length; ++i)
-                    PointerEnemyHP[i] = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressEnemyHP), 0x140, 0x50, 0x0 + (i * 0x04));
+                    PointerEnemyHP[i] = new MultilevelPointer(memoryAccess, IntPtr.Add(BaseAddress, pointerAddressEnemyHP), 0x30, 0x0 + (i * 0x04));
 
                 PointerInventoryEntryListPlayer1 = new MultilevelPointer(
                     memoryAccess,
@@ -125,18 +123,38 @@ namespace SRTPluginProviderRE5
             }
         }
 
-        private void SelectPointerAddresses()
+        private void SelectPointerAddresses(GameVersion gv)
         {
-            pointerAddressHP = 0xDA2A5C;
-            pointerAddressEnemyHP = 0xDA224C;
-            pointerAddressMoney = 0xDA23D8;
-            pointerAddressKills = 0xDA23D8;
-            pointerAddressDA = 0xE2487C;
-            pointerAddressChapter = 0xDA23D8;
-            pointerAddressEndOfChapter = 0xDA23D8;
-            pointerAddressIGT = 0xDA23D8;
-            pointerAddressInventory = 0xDA2A34;
-            pointerAddressGamestate = 0xDA2970;
+            if(gv == GameVersion.STEAM_1_1_0)
+            {
+                pointerAddressHP = 0xE243B4;
+                pointerAddressEnemyHP = 0xDA224C;
+                pointerAddressMoney = 0xDA23D8;
+                pointerAddressKills = 0xDA23D8;
+                pointerAddressDA = 0xE2487C;
+                pointerAddressChapter = 0xDA23D8;
+                pointerAddressEndOfChapter = 0xDA23D8;
+                pointerAddressIGT = 0xDA23D8;
+                pointerAddressInventory = 0xDA2A34;
+                pointerAddressGamestate = 0xDA2970;
+            } else if(gv == GameVersion.STEAM_1_2_0)
+            {
+                pointerAddressHP = 0xE340B0;
+                pointerAddressEnemyHP = 0xDB1FCC;
+                pointerAddressMoney = 0xDB2158;
+                pointerAddressKills = 0xDB2158;
+                pointerAddressDA = 0xE34578;
+                pointerAddressChapter = 0xDB2158;
+                pointerAddressEndOfChapter = 0xDB2158;
+                pointerAddressIGT = 0xDB2158;
+                pointerAddressInventory = 0xDB27B4;
+                pointerAddressGamestate = 0xDB26F0;
+            }
+            else
+            {
+                Console.WriteLine("Version wasn't recognized");
+                return;
+            }
         }
 
         /// <summary>
@@ -205,83 +223,40 @@ namespace SRTPluginProviderRE5
             GenerateItemEntries();
         }
 
-        internal unsafe IGameMemoryRE5 Refresh()
-        {
-            bool success;
-
+        internal unsafe IGameMemoryRE5 Refresh(GameVersion gv)
+{
             // Chris HP
             gameMemoryValues._player = PointerPlayerHP.Deref<GamePlayer>(0x1364);
             gameMemoryValues._player2 = PointerPlayerHP2.Deref<GamePlayer>(0x1364);
+            gameMemoryValues._money = PointerMoney.DerefInt(0x1C0);
+            gameMemoryValues._chrisKills = PointerKillsChris.DerefInt(0x27404);
+            gameMemoryValues._shevaKills = PointerKillsSheva.DerefInt(0x27404);
+            gameMemoryValues._chrisDA = PointerChrisDA.DerefShort(0x388);
+            gameMemoryValues._chrisDARank = PointerChrisDARank.DerefShort(0x37C);
+            gameMemoryValues._shevaDA = PointerShevaDA.DerefShort(0x3B4);
+            gameMemoryValues._shevaDARank = PointerShevaDARank.DerefShort(0x3A8);
+            gameMemoryValues._chapter = PointerChapter.DerefInt(0x273D0);
+            gameMemoryValues._shotsfired = PointerShotsFired.DerefInt(0x273D0);
+            gameMemoryValues._enemiesHit = PointerShotsFired.DerefInt(0x273F4);
+            gameMemoryValues._deaths = PointerShotsFired.DerefInt(0x273F8);
+            gameMemoryValues._igt = PointerIGT.DerefFloat(0x273F8);
+            gameMemoryValues._shotsfired2 = PointerShotsFired.DerefInt(0x27408);
+            gameMemoryValues._enemiesHit2 = PointerShotsFired.DerefInt(0x2740C);
+            gameMemoryValues._deaths2 = PointerShotsFired.DerefInt(0x27400);
+            gameMemoryValues._igt2 = PointerIGT.DerefFloat(0x27410);
 
-            fixed (int* p = &gameMemoryValues._money)
-                success = PointerMoney.TryDerefInt(0x1C0, p);
-
-            // Gamestate
-            gameMemoryValues._gameState = PointerGamestate.DerefByte(0x3A4);
-
-            // Money
-            fixed (int* p = &gameMemoryValues._money)
-                success = PointerMoney.TryDerefInt(0x1C0, p);
-                
-            // Kills Chris
-            fixed (int* p = &gameMemoryValues._chrisKills)
-                success = PointerKillsChris.TryDerefInt(0x273EC, p);
-
-            // Kills Sheva
-            fixed (int* p = &gameMemoryValues._shevaKills)
-                success = PointerKillsSheva.TryDerefInt(0x27404, p);
-
-            // Chris DA
-            fixed (short* p = &gameMemoryValues._chrisDA)
-                success = PointerChrisDA.TryDerefShort(0x388, p);
-
-            // Chris DA Rank
-            fixed (short* p = &gameMemoryValues._chrisDARank)
-                success = PointerChrisDARank.TryDerefShort(0x37C, p);
-
-            // Sheva DA
-            fixed (short* p = &gameMemoryValues._shevaDA)
-                success = PointerShevaDA.TryDerefShort(0x3B4, p);
-
-            // Sheva DA Rank
-            fixed (short* p = &gameMemoryValues._shevaDARank)
-                success = PointerShevaDARank.TryDerefShort(0x3A8, p);
-
-            // Chapter
-            fixed (int* p = &gameMemoryValues._chapter)
-                success = PointerChapter.TryDerefInt(0x273D0, p);
-
-            // Shots Fired
-            fixed (int* p = &gameMemoryValues._shotsfired)
-                success = PointerShotsFired.TryDerefInt(0x273F0, p);
-
-            // Enemies Hit
-            fixed (int* p = &gameMemoryValues._enemiesHit)
-                success = PointerShotsFired.TryDerefInt(0x273F4, p);
-
-            // Deaths
-            fixed (int* p = &gameMemoryValues._deaths)
-                success = PointerShotsFired.TryDerefInt(0x273E8, p);
-
-            // IGT
-            fixed (float* p = &gameMemoryValues._igt)
-                success = PointerIGT.TryDerefFloat(0x273F8, p);
-
-            // Shots Fired 2
-            fixed (int* p = &gameMemoryValues._shotsfired2)
-                success = PointerShotsFired.TryDerefInt(0x27408, p);
-
-            // Enemies Hit 2
-            fixed (int* p = &gameMemoryValues._enemiesHit2)
-                success = PointerShotsFired.TryDerefInt(0x2740C, p);
-
-            // Deaths 2
-            fixed (int* p = &gameMemoryValues._deaths2)
-                success = PointerShotsFired.TryDerefInt(0x27400, p);
-
-            // IGT 2
-            fixed (float* p = &gameMemoryValues._igt2)
-                success = PointerShotsFired.TryDerefFloat(0x27410, p);
+            if (gv == GameVersion.STEAM_1_1_0)
+            {
+                gameMemoryValues._gameState = PointerGamestate.DerefByte(0x3A4);
+            }
+            else if (gv == GameVersion.STEAM_1_2_0)
+            {
+                gameMemoryValues._gameState = PointerGamestate.DerefByte(0x5E4);
+            }
+            else
+            {
+                Console.WriteLine("No Version was recognized");
+            }
 
             // Enemy HP
             GenerateEnemyEntries();
@@ -315,7 +290,6 @@ namespace SRTPluginProviderRE5
                                 PointerEnemyHP[i].TryDerefShort(0x1366, p);
                             fixed (short* p = &gameMemoryValues.EnemyHealth[i]._currentHP)
                                 PointerEnemyHP[i].TryDerefShort(0x1364, p);
-
 
                         }
                         else if (i == 0)
